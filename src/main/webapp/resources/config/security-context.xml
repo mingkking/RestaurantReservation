@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:sc="http://www.springframework.org/schema/security"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd">
+		
+	<!-- password Encoder -->
+	<bean id = "bcryptPasswordEncoder"
+		class = "org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"/>
+	
+	<sc:http pattern="/resources/**" security="none"/>
+	
+	<sc:http auto-config="true" use-expressions="true">
+		<sc:csrf disabled="true"/>
+		<sc:intercept-url pattern="/store/**" access="hasAnyRole('MANAGER, ADMIN')"/>
+		<sc:intercept-url pattern="/signin" access="isAnonymous()"/>
+    	<sc:intercept-url pattern="/admin/**" access="hasRole('ADMIN')"/>
+		<sc:intercept-url pattern="/serviceBoard/**" access="permitAll"/>
+		<sc:intercept-url pattern="/member/signup/**" access="isAnonymous()"/>
+		<sc:intercept-url pattern="/member/**" access="hasAnyRole('MEMBER, MANAGER, ADMIN')"/>
+ 		<sc:intercept-url pattern="/**" access="permitAll"/>
+		
+		<sc:form-login	login-page="/signin"
+						default-target-url="/" 
+					 	username-parameter="id"
+						password-parameter="password"/>
+						
+		<sc:logout	logout-url = "/logout"
+					invalidate-session="true"
+					logout-success-url="/"/>
+		<sc:access-denied-handler error-page="/errorForbidden" />
+	</sc:http>
+
+	<sc:authentication-manager>
+        <sc:authentication-provider>
+        <sc:password-encoder ref="bcryptPasswordEncoder"/>
+        <sc:jdbc-user-service data-source-ref="basic_datasource"
+        	users-by-username-query="Select id,password,enabled from member where id=?"
+        	authorities-by-username-query="select id,authority from member where id=?"/>
+        </sc:authentication-provider>
+	</sc:authentication-manager>
+	
+</beans>
